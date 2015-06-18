@@ -109,7 +109,11 @@ public class View {
 	private Boolean includeDocs;
 	private Boolean inclusiveEnd;
 	private Boolean updateSeq;
-	
+
+	/** This will be true initially or if the most recent call to {@link #queryNextPage} or
+	 * {@link #queryPreviousPage} was {@link #queryNextPage}, and false otherwise. */
+	private boolean pagingForwards = true;
+
 	private CouchDatabaseBase dbc;
 	private Gson gson;
 	private URIBuilder uriBuilder;
@@ -309,78 +313,42 @@ public class View {
 			return queryNextPage(rowsPerPage, currentStartKey, currentStartKeyDocId, startKey, startKeyDocId, classOfT);
 		}
 	}
-	
+
 	/**
 	 * @return The next page.
 	 */
 	private <T> Page<T> queryNextPage(int rowsPerPage, String currentStartKey, 
 			String currentStartKeyDocId, String startKey, String startKeyDocId, Class<T> classOfT) {
-		// set view query params
-		limit(rowsPerPage + 1);
-		includeDocs(true);
-		if(startKey != null) { 
-			startKey(startKey);
-			startKeyDocId(startKeyDocId);
-		}
-		// init page, query view
-		final Page<T> page = new Page<T>();
-		final List<T> pageList = new ArrayList<T>();
-		final ViewResult<String, String, T> vr = queryView(String.class, String.class, classOfT);
-		final List<ViewResult<String, String, T>.Rows> rows = vr.getRows();
-		final int resultRows = rows.size();
-		final int offset = vr.getOffset();
-		final long totalRows = vr.getTotalRows();
-		// holds page params
-		final JsonObject currentKeys = new JsonObject();
-		final JsonObject jsonNext = new JsonObject();
-		final JsonObject jsonPrev = new JsonObject();
-		currentKeys.addProperty(CURRENT_START_KEY, rows.get(0).getKey());
-		currentKeys.addProperty(CURRENT_START_KEY_DOC_ID, rows.get(0).getId());
-		for (int i = 0; i < resultRows; i++) {
-			// set keys for the next page
-			if (i == resultRows - 1) { // last element (i.e rowsPerPage + 1)
-				if(resultRows > rowsPerPage) { // if not last page
-					page.setHasNext(true);
-					jsonNext.addProperty(START_KEY, rows.get(i).getKey());
-					jsonNext.addProperty(START_KEY_DOC_ID, rows.get(i).getId());
-					jsonNext.add(CURRENT_KEYS, currentKeys);
-					jsonNext.addProperty(ACTION, NEXT); 
-					page.setNextParam(Base64.encodeBase64URLSafeString(jsonNext.toString().getBytes()));
-					continue; // exclude 
-				} 
-			}
-			pageList.add(rows.get(i).getDoc());
-		}
-		// set keys for the previous page
-		if(offset != 0) { // if not first page
-			page.setHasPrevious(true);
-			jsonPrev.addProperty(START_KEY, currentStartKey);
-			jsonPrev.addProperty(START_KEY_DOC_ID, currentStartKeyDocId);
-			jsonPrev.add(CURRENT_KEYS, currentKeys);
-			jsonPrev.addProperty(ACTION, PREVIOUS); 
-			page.setPreviousParam(Base64.encodeBase64URLSafeString(jsonPrev.toString().getBytes()));
-		}
-		// calculate paging display info
-		page.setResultList(pageList);
-		page.setTotalResults(totalRows);
-		page.setResultFrom(offset + 1);
-		final int resultTo = rowsPerPage > resultRows ? resultRows : rowsPerPage; // fix when rowsPerPage exceeds returned rows
-		page.setResultTo(offset + resultTo);
-		page.setPageNumber((int) Math.ceil(page.getResultFrom() / Double.valueOf(rowsPerPage)));
-		return page;
+		return queryPage(false, rowsPerPage, currentStartKey, currentStartKeyDocId, startKey, startKeyDocId, classOfT);
 	}
-	
+
 	/**
 	 * @return The previous page.
 	 */
 	private <T> Page<T> queryPreviousPage(int rowsPerPage, String currentStartKey, 
 			String currentStartKeyDocId, String startKey, String startKeyDocId, Class<T> classOfT) {
+		return queryPage(true, rowsPerPage, currentStartKey, currentStartKeyDocId, startKey, startKeyDocId, classOfT);
+	}
+
+	private <T> Page<T> queryPage(boolean previousPage, int rowsPerPage, String currentStartKey,
+								  String currentStartKeyDocId, String startKey, String startKeyDocId, Class<T> classOfT) {
 		// set view query params
 		limit(rowsPerPage + 1);
 		includeDocs(true);
-		descending(true); // read backward
-		startKey(currentStartKey); 
-		startKeyDocId(currentStartKeyDocId); 
+
+		if (previousPage == pagingForwards) {
+			// We've changed paging direction.
+			invertDirection();
+		}
+
+		if (previousPage) {
+			startKey(currentStartKey);
+			startKeyDocId(currentStartKeyDocId);
+		} else if (startKey != null) {
+			startKey(startKey);
+			startKeyDocId(startKeyDocId);
+		}
+
 		// init page, query view
 		final Page<T> page = new Page<T>();
 		final List<T> pageList = new ArrayList<T>();
@@ -389,7 +357,9 @@ public class View {
 		final int resultRows = rows.size();
 		final int offset = vr.getOffset();
 		final long totalRows = vr.getTotalRows();
-		Collections.reverse(rows); // fix order
+		if (previousPage) {
+			Collections.reverse(rows); // fix order
+		}
 		// holds page params
 		final JsonObject currentKeys = new JsonObject();
 		final JsonObject jsonNext = new JsonObject();
@@ -399,37 +369,47 @@ public class View {
 		for (int i = 0; i < resultRows; i++) {
 			// set keys for the next page
 			if (i == resultRows - 1) { // last element (i.e rowsPerPage + 1)
-				if(resultRows >= rowsPerPage) { // if not last page
+				boolean isLastPage = resultRows <= rowsPerPage;
+				if(!isLastPage) {
 					page.setHasNext(true);
 					jsonNext.addProperty(START_KEY, rows.get(i).getKey());
 					jsonNext.addProperty(START_KEY_DOC_ID, rows.get(i).getId());
 					jsonNext.add(CURRENT_KEYS, currentKeys);
-					jsonNext.addProperty(ACTION, NEXT); 
+					jsonNext.addProperty(ACTION, NEXT);
 					page.setNextParam(Base64.encodeBase64URLSafeString(jsonNext.toString().getBytes()));
-					continue; 
+					continue;
 				}
 			}
 			pageList.add(rows.get(i).getDoc());
 		}
-		// set keys for the previous page
-		if(offset != (totalRows - rowsPerPage - 1)) { // if not first page
+		// set keys for the previousPage page
+		boolean isFirstPage = (!previousPage && offset == 0) || (previousPage && offset == totalRows - rowsPerPage - 1);
+		if(!isFirstPage) {
 			page.setHasPrevious(true);
 			jsonPrev.addProperty(START_KEY, currentStartKey);
 			jsonPrev.addProperty(START_KEY_DOC_ID, currentStartKeyDocId);
 			jsonPrev.add(CURRENT_KEYS, currentKeys);
-			jsonPrev.addProperty(ACTION, PREVIOUS); 
+			jsonPrev.addProperty(ACTION, PREVIOUS);
 			page.setPreviousParam(Base64.encodeBase64URLSafeString(jsonPrev.toString().getBytes()));
 		}
 		// calculate paging display info
 		page.setResultList(pageList);
 		page.setTotalResults(totalRows);
-		page.setResultFrom((int) totalRows - (offset + rowsPerPage));
-		final int resultTo = (int) totalRows - offset - 1;
-		page.setResultTo(resultTo);
-		page.setPageNumber(resultTo / rowsPerPage);
+		if (previousPage) {
+			page.setResultFrom((int) totalRows - (offset + rowsPerPage));
+			final int resultTo = (int) totalRows - offset - 1;
+			page.setResultTo(resultTo);
+			page.setPageNumber(resultTo / rowsPerPage);
+		} else {
+			page.setResultFrom(offset + 1);
+			final int resultTo = rowsPerPage > resultRows ? resultRows : rowsPerPage; // fix when rowsPerPage exceeds returned rows
+
+			page.setResultTo(offset + resultTo);
+			page.setPageNumber((int) Math.ceil(page.getResultFrom() / (double)rowsPerPage));
+		}
 		return page;
 	}
-	
+
 	// fields
 	
 	/**
@@ -490,7 +470,7 @@ public class View {
 	 * Reverses the reading direction, not the sort order.
 	 */
 	public View descending(Boolean descending) {
-		this.descending = Boolean.valueOf(gson.toJson(descending));
+		this.descending = descending;
 		uriBuilder.query("descending", this.descending);
 		return this;
 	}
@@ -589,5 +569,15 @@ public class View {
 	
 	private String getKeyAsJson(Object... key) {
 		return (key.length == 1) ? gson.toJson(key[0]) : gson.toJson(key); // single or complex key
+	}
+
+	/**
+	 * Invert the reading direction.
+	 */
+	private View invertDirection() {
+		pagingForwards = !pagingForwards;
+		boolean directionDescending = descending == null ? !pagingForwards : descending == pagingForwards;
+		uriBuilder.query("descending", directionDescending, true);
+		return this;
 	}
 }

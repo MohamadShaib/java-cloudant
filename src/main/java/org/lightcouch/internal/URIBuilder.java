@@ -115,10 +115,37 @@ public class URIBuilder {
         return this;
     }
 
-    public URIBuilder query(String name, Object value) {
-        if (name != null && value != null)
-            this.qParams.addParam(name, value.toString());
+    /**
+     * Add the given {@code name} and {@code value} to the query parameters or update
+     * the existing query parameter matching {@code name} with the new {@code value}.
+     * @param name The name to add/update.
+     * @param value The value to add/update.
+     * @param update set to true to update an existing query parameter matching {@code name},
+     *               or false to add a new one. Note that if this is true and there is no
+     *               parameter matching {@code name}, the parameter will be added.
+     * @return The updated {@link URIBuilder} object.
+     */
+    public URIBuilder query(String name, Object value, boolean update) {
+        if (name != null && value != null) {
+            if (update) {
+                this.qParams.updateOrAdd(name, value.toString());
+            } else {
+                this.qParams.addParam(name, value.toString());
+            }
+        }
         return this;
+
+    }
+
+    /**
+     * Add the given {@code name} and {@code value} to the query parameters.
+     * @param name The name to add.
+     * @param value The value to add.
+     * @return The updated {@link URIBuilder} object.
+     */
+    public URIBuilder query(String name, Object value) {
+        return query(name, value, false);
+
     }
 
     /** @deprecated Use {@link #query(String, Object)} instead. */

@@ -92,4 +92,25 @@ public class Params {
     public void addAll(Params params) {
         this.params.addAll(params.params);
     }
+
+    /**
+     * If this object already contains a value for {@code name}, update the first
+     * instance of {@code name} found with the new {@code value}. Otherwise, add
+     * the new {@code name} and {@code value}.
+     * @param name The name to update/add.
+     * @param value The new value.
+     */
+    public void updateOrAdd(String name, String value) {
+        boolean found = false;
+        for (Param param : params) {
+            if (param.getKey().equals(name)) {
+                param.setValue(value);
+                found = true;
+                break;
+            }
+        }
+        if (!found) {
+            addParam(name, value);
+        }
+    }
 }

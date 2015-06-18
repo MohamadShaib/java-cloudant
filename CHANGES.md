@@ -1,5 +1,6 @@
 # Unreleased
 
+- [FIX] Fixed querying of next/previous page in a descending view.
 - [BREAKING CHANGE] Hostname verification and certificate chain
   validation are now enabled by default. To disable these additional
   checks when the client connects to the database,
