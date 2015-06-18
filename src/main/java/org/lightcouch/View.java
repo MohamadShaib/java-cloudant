@@ -568,7 +568,39 @@ public class View {
 	}
 	
 	private String getKeyAsJson(Object... key) {
-		return (key.length == 1) ? gson.toJson(key[0]) : gson.toJson(key); // single or complex key
+		String s = (key.length == 1) ? gson.toJson(key[0]) : gson.toJson(key); // single or complex key
+		// Escape the non-ASCII characters as suitable for JavaScript.
+		// The gson.toJson conversion (through its JsonWriter) has
+		// already escaped the ASCII characters ('"', '\\', etc.) as
+		// suitable for interpretation by a JSON parser. But we need
+		// to escape also the non-ASCII characters, since they would
+		// cause trouble when used as unescaped UTF-8 in the URL.
+		// For the syntax, see ECMAScript's definition of string type:
+		// http://ecma-international.org/ecma-262/5.1/#sec-8.4
+		//   "When a String contains actual textual data, each element is
+		//    considered to be a single UTF-16 code unit."
+		// http://ecma-international.org/ecma-262/5.1/#sec-6
+		//   "any character (code unit) may also be expressed as a Unicode
+		//    escape sequence consisting of six characters, namely \ u plus
+		//    four hexadecimal digits."
+		StringBuilder buf = new StringBuilder();
+		int len = s.length();
+		for (int i = 0; i < len; i++) {
+			char c = s.charAt(i);
+			if (c < 0x007f) {
+				// ASCII characters don't need escaping.
+				buf.append(c);
+			} else {
+				// Use Unicode escape notation.
+				buf.append('\\'); buf.append('u');
+				String hexdigits = "0123456789abcdef";
+				buf.append(hexdigits.charAt((c >> 12) & 0x0f));
+				buf.append(hexdigits.charAt((c >> 8) & 0x0f));
+				buf.append(hexdigits.charAt((c >> 4) & 0x0f));
+				buf.append(hexdigits.charAt(c & 0x0f));
+			}
+		}
+		return buf.toString();
 	}
 
 	/**
