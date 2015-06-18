@@ -95,8 +95,6 @@ public class CloudantClient {
 	public CloudantClient(String account, String loginUsername, String password) {
 		super();
 		Map<String,String> h = parseAccount(account);
-		assertNotEmpty(loginUsername,"loginUsername");
-		assertNotEmpty(password,"password");
 		this.loginUsername = loginUsername;
 		this.password = password;
 		
@@ -120,8 +118,6 @@ public class CloudantClient {
 	public CloudantClient(String account, String loginUsername, String password,ConnectOptions connectOptions){
 		super();
 		Map<String,String> h = parseAccount(account);
-		assertNotEmpty(loginUsername,"loginUsername");
-		assertNotEmpty(password,"password");
 		this.loginUsername = loginUsername;
 		this.password = password;
 		
@@ -231,9 +227,19 @@ public class CloudantClient {
 	 * Request to  delete a database.
 	 * @param dbName The database name
 	 * @param confirm A confirmation string with the value: <tt>delete database</tt>
+	 * @deprecated use {@link CloudantClient#deleteDB(String)}
 	 */
+	@Deprecated
 	public void deleteDB(String dbName, String confirm) {
 		client.deleteDB(dbName, confirm);
+	}
+
+	/**
+	 * Request to  delete a database.
+	 * @param dbName The database name
+	 */
+	public void deleteDB(String dbName){
+		client.deleteDB(dbName);
 	}
 
 
@@ -453,6 +459,7 @@ public class CloudantClient {
 			
 			props.setProxyHost(connectOptions.getProxyHost());
 			props.setProxyPort(connectOptions.getProxyPort());
+			props.disableSSLAuthentication(connectOptions.isSSLAuthenticationDisabled());
 		}
 		this.client = new CouchDbClient(props);
 		

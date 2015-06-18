@@ -3,18 +3,20 @@ package com.cloudant.tests;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.Properties;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
+import org.junit.After;
+import org.junit.Before;
 import org.junit.Test;
-//import org.lightcouch.DesignDocument;
+import org.junit.experimental.categories.Category;
+import org.lightcouch.internal.URIBuilder;
 
 import com.cloudant.client.api.CloudantClient;
 import com.cloudant.client.api.Database;
@@ -22,28 +24,24 @@ import com.cloudant.client.api.Search;
 import com.cloudant.client.api.model.DesignDocument;
 import com.cloudant.client.api.model.SearchResult;
 import com.cloudant.client.api.model.SearchResult.SearchResultRows;
-import com.cloudant.tests.util.Utils;
+import com.cloudant.test.main.RequiresCloudant;
 
+@Category(RequiresCloudant.class)
 public class SearchTests {
 
 	private static final Log log = LogFactory.getLog(SearchTests.class);
-	private static CloudantClient account;
 	private static Database db;
+	private CloudantClient account;
 	
-	@BeforeClass
-	public static void setUpClass() {
-		Properties props = Utils.getProperties("cloudant.properties",log);
-		String cloudantaccount = props.getProperty("cloudant.account");
-		String userName= props.getProperty("cloudant.username");
-		String password = props.getProperty("cloudant.password");
-		
-		account = new CloudantClient(cloudantaccount,userName,password);
+	@Before
+	public  void setUp() {
+		account = CloudantClientHelper.getClient();
 		
 		// replciate the animals db for search tests
 		com.cloudant.client.api.Replication r = account.replication();
 		r.source("https://examples.cloudant.com/animaldb");
 		r.createTarget(true);
-		r.target("https://"+ userName + ":" + password + "@" + Utils.getHostName(cloudantaccount) + "/animaldb");
+		r.target(CloudantClientHelper.SERVER_URI.toString()+ "/animaldb");
 		r.trigger();
 		db = account.database("animaldb", false);
 		
@@ -52,9 +50,9 @@ public class SearchTests {
 		db.design().synchronizeWithDb(designDoc);
 	}
 
-	@AfterClass
-	public static void tearDownClass() {
-		account.deleteDB("animaldb", "delete database");
+	@After
+	public  void tearDown() {
+		account.deleteDB("animaldb");
 		account.shutdown();
 	}
 	
@@ -203,6 +201,38 @@ public class SearchTests {
 		
 	}
 
-	
-	
+    private void escapingTest(String expectedResult, String query) {
+        URIBuilder uriBuilder = new URIBuilder();
+        uriBuilder.scheme("https");
+        uriBuilder.host(CloudantClientHelper.COUCH_USERNAME + ".cloudant.com");
+        uriBuilder.port(443);
+        uriBuilder.path("/animaldb/_design/views101/_search/animals");
+        uriBuilder.query("include_docs", true);
+        uriBuilder.query("q", query);
+        URI uri = uriBuilder.build();
+
+        String uriBaseString = account.getBaseUri().toASCIIString();
+
+        String expectedUriString = uriBaseString + "animaldb/_design/views101/_search/animals?include_docs=true&q=" + expectedResult;
+
+        String uriString = uri.toASCIIString();
+        assertEquals(expectedUriString, uriString);
+    }
+
+    @Test
+    public void escapedPlusTest() {
+        escapingTest("class:mammal%2Btest%2Bescaping", "class:mammal+test+escaping");
+    }
+
+    @Test
+    public void escapedEqualsTest() {
+        escapingTest("class:mammal%3Dtest%3Descaping", "class:mammal=test=escaping");
+    }
+
+    @Test
+    public void escapedAmpersandTest() {
+        escapingTest("class:mammal%26test%26escaping", "class:mammal&test&escaping");
+    }
+
 }
+

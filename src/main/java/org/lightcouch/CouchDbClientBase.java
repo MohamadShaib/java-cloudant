@@ -1,3 +1,20 @@
+/*
+ * Copyright (C) 2011 lightcouch.org
+ *
+ * Modifications for this distribution by IBM Cloudant, Copyright (c) 2015 IBM Corp.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package org.lightcouch;
 
 import static org.lightcouch.internal.CouchDbUtil.assertNotEmpty;
@@ -13,6 +30,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
+import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Type;
 import java.net.URI;
 import java.util.List;
@@ -100,6 +118,9 @@ public abstract class CouchDbClientBase {
 	
 	
 	private void getCookie(final CouchDbProperties props) {
+		if(props.getUsername() == null || props.getPassword() == null){
+			return;
+		}
 		URI uri = buildUri(baseURI).path("_session").build();
         String body = "name=" +  props.getUsername() + "&password=" + props.getPassword();
               
@@ -173,14 +194,22 @@ public abstract class CouchDbClientBase {
 		 * Requests CouchDB deletes a database.
 		 * @param dbName The database name
 		 * @param confirm A confirmation string with the value: <tt>delete database</tt>
+		 * @Deprecated Use {@link CouchDbClientBase#deleteDB(String)}
 		 */
+		@Deprecated
 		public void deleteDB(String dbName, String confirm) {
-			assertNotEmpty(dbName, "dbName");
 			if(!"delete database".equals(confirm))
 				throw new IllegalArgumentException("Invalid confirm!");
+			deleteDB(dbName);
+		}
+
+		/**
+		 * Requests CouchDB deletes a database.
+		 * @param dbName The database name
+		 */
+	    public void deleteDB(String dbName){
+			assertNotEmpty(dbName, "dbName");
 			delete(buildUri(getBaseUri()).path(dbName).build());
-			
-			
 		}
 
 		/**
@@ -212,8 +241,11 @@ public abstract class CouchDbClientBase {
 			try {
 				Type typeOfList = new TypeToken<List<String>>() {}.getType();
 				instream = get(buildUri(getBaseUri()).path("_all_dbs").build());
-				Reader reader = new InputStreamReader(instream);
+				Reader reader = new InputStreamReader(instream, "UTF-8");
 				return getGson().fromJson(reader, typeOfList);
+			} catch (UnsupportedEncodingException e) {
+				// This should never happen as every implementation of the java platform is required to support UTF-8.
+				throw new RuntimeException(e);
 			} finally {
 				close(instream);
 			}
@@ -226,8 +258,11 @@ public abstract class CouchDbClientBase {
 			InputStream instream = null;
 			try {
 				instream = get(buildUri(getBaseUri()).build());
-				Reader reader = new InputStreamReader(instream);
+				Reader reader = new InputStreamReader(instream, "UTF-8");
 				return getAsString(new JsonParser().parse(reader).getAsJsonObject(), "version");
+			} catch (UnsupportedEncodingException e) {
+				// This should never happen as every implementation of the java platform is required to support UTF-8.
+				throw new RuntimeException(e);
 			} finally {
 				close(instream);
 			}
@@ -323,7 +358,10 @@ public abstract class CouchDbClientBase {
 			InputStream in = null;
 			try {
 				in = get(uri);
-				return getGson().fromJson(new InputStreamReader(in), classType);
+				return getGson().fromJson(new InputStreamReader(in, "UTF-8"), classType);
+			} catch (UnsupportedEncodingException e) {
+				// This should never happen as every implementation of the java platform is required to support UTF-8.
+				throw new RuntimeException(e);
 			} finally {
 				close(in);
 			}

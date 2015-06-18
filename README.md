@@ -1,4 +1,5 @@
 # Cloudant Java Client
+[![Build Status](https://travis-ci.org/cloudant/java-cloudant.svg?branch=master)](https://travis-ci.org/cloudant/java-cloudant)
 
 This is the official Cloudant library for Java
 
@@ -18,7 +19,7 @@ Maven:
 
 <dependency>
   <groupId>com.cloudant</groupId>
-  <artifactId>cloudant-client</artifactId> 
+  <artifactId>cloudant-client</artifactId>
   <version>1.0.1</version>
 </dependency>
 
@@ -33,13 +34,13 @@ dependencies {
 ```
 
 Alternately download the dependencies  
-  [cloudant.jar](http://search.maven.org/remotecontent?filepath=com/cloudant/cloudant-client/1.0.1/cloudant-client-1.0.1.jar)    
+  [cloudant.jar](http://search.maven.org/remotecontent?filepath=com/cloudant/cloudant-client/1.0.1/cloudant-client-1.0.1.jar)
   [HttpClient 4.3.3](http://hc.apache.org/downloads.cgi)  
   [HttpCore 4.3.2](http://hc.apache.org/downloads.cgi)  
   [Commons Codec 1.6](http://commons.apache.org/codec/download_codec.cgi)  
   [Commons Logging 1.1.3](http://commons.apache.org/logging/download_logging.cgi)  
   [Gson 2.2.4](http://code.google.com/p/google-gson/downloads/list)  
-  
+
 ### Getting Started
 
 Now it's time to begin doing real work with Cloudant and Java. For working code samples of any of the API's please go to our Test suite.
@@ -82,7 +83,7 @@ Output:
     Server version = 1.0.2
     All my databases: example_db, jasons_stuff, scores
 
-When you instaniate a `CloudantClient`, you are authenticating with cloudant using the [cookie authentication](http://guide.couchdb.org/editions/1/en/security.html#cookies) functionality 
+When you instaniate a `CloudantClient`, you are authenticating with cloudant using the [cookie authentication](http://guide.couchdb.org/editions/1/en/security.html#cookies) functionality
 
 ### Security Note
 
@@ -96,7 +97,7 @@ String password = System.getProperty("cloudant_password");
 CloudantClient client = new CloudantClient("mdb","mdb",password);
 
 // Clean up the database we created previously.
-client.deleteDB("alice", "delete database");
+client.deleteDB("alice");
 
 // Create a new database.
 client.createDB("alice");
@@ -109,20 +110,20 @@ db.save(new Rabbit(true));
 System.out.println("You have inserted the Rabbit");  
 Rabbit r = db.find(Rabbit.class,"rabbit");
 System.out.println(r);
-   
+
    ...
 public class Rabbit {
 	private boolean crazy;
 	private String _id = "rabbit";
-	
+
 	public Rabbit(boolean isCrazy) {
 		crazy = isCrazy;
 	}
-	
+
 	public String toString() {
 		return " { id : " + _id + ", rev : " + _rev + ", crazy : " + crazy + "}";
 	}
-}   
+}
 ~~~
 
 If you run this example, you will see:
@@ -140,10 +141,10 @@ If you run this example, you will see:
 - [Server Functions](#server-functions)
 	- [CloudantClient.createDB(name)](#comcloudantclientapicloudantclientcreatedbname)
 	- [CloudantClient.database(name, create)](#comcloudantclientapicloudantclientdatabasenamecreate)
-	- [CloudantClient.deleteDB(name, confirmDelete)](#comcloudantclientapicloudantclientdeletedbnameconfirmdelete)
+	- [CloudantClient.deleteDB(name)](#comcloudantclientapicloudantclientdeletedbname)
 	- [CloudantClient.getAllDbs()](#comcloudantclientapicloudantclientgetalldbs)
 	- [CloudantClient.getMembership()](#comcloudantclientapicloudantclientgetmembership)
-	- [CloudantClient.getActiveTasks()](#comcloudantclientapicloudantclientgetactivetasks)	
+	- [CloudantClient.getActiveTasks()](#comcloudantclientapicloudantclientgetactivetasks)
 	- [CloudantClient.replicator()](#comcloudantclientapicloudantclientreplicator)
 	- [CloudantClient.replication()](#comcloudantclientapicloudantclientreplication )
 	- [CloudantClient.executeRequest()](#comcloudantclientapicloudantclientexecuterequest)
@@ -181,7 +182,7 @@ If you run this example, you will see:
 	- [Fetch All/multiple documents](#fetch-all/multiple-documents)
 - [Attachment Functions](#attachment-functions)
 	- [Inline attachment](#inline-attachment)
-	- [Standalone Attachments](#standalone-attachments)	
+	- [Standalone Attachments](#standalone-attachments)
 - [Design Document Functions](#design-document-functions)
 	- [query on a view](#query-on-a-view)
 	- [retrieving the design doc from server](#retrieving-the-design-doc-from-server)
@@ -234,7 +235,7 @@ Generate an API key.
 ~~~ java
 ApiKey key = client.generateApiKey();
 System.out.println(key);
-		
+
 ~~~
 
 Output:
@@ -248,7 +249,7 @@ Next, set access roles for this API key:
 Database db = client.database("alice", false);
 db.setPermissions(key.getKey(), EnumSet.<Permissions>of(Permissions._reader));
 System.out.println(key.getKey() + " now has read-only access to alice")
-  
+
 ~~~
 
 ## Server Functions
@@ -271,15 +272,15 @@ Get a Database reference
 ~~~ java
 Database db = client.database("alice", false);
 System.out.println("Database Name:" + db.info().getDbName() );
- 
+
 ~~~
 
-### com.cloudant.client.api.CloudantClient.deleteDB(name,confirmDelete)
+### com.cloudant.client.api.CloudantClient.deleteDB(name)
 
 Destroy database named `name`.
 
 ~~~ java
-client.deleteDB("alice","delete database");
+client.deleteDB("alice");
 
 ~~~
 
@@ -304,13 +305,13 @@ for ( String db : databases ) {
 ~~~
 
 ### com.cloudant.client.api.CloudantClient.getActiveTasks()
-`getActiveTasks()` returns all active tasks 
+`getActiveTasks()` returns all active tasks
 
 ~~~ java
 	List<Task> tasks = client.getActiveTasks();
 ~~~
 
-### com.cloudant.client.api.CloudantClient.replicator() 
+### com.cloudant.client.api.CloudantClient.replicator()
 
 `replicator()` provides access to Cloudant `com.cloudant.client.api.Replicator` APIs
 
@@ -318,7 +319,7 @@ for ( String db : databases ) {
 Replicator replicator = client.replicator()
 ~~~
 
-### com.cloudant.client.api.CloudantClient.replication() 
+### com.cloudant.client.api.CloudantClient.replication()
 
 Replicates `source` to `target`. `target`
 must exist, add `createTarget(true)` to create it prior to
@@ -330,19 +331,19 @@ ReplicationResult result = client.replication()
 					.source(db1.getDBUri().toString())
 					.target(db2.getDBUri().toString())
 					.trigger();
-List<ReplicationHistory> histories = result.getHistories();				
+List<ReplicationHistory> histories = result.getHistories();
 
 ~~~
 
 ### com.cloudant.client.api.CloudantClient.executeRequest()
 
-This API enables extending Cloudant internal API by allowing a user-defined raw HTTP request to execute against a cloudant client. 
+This API enables extending Cloudant internal API by allowing a user-defined raw HTTP request to execute against a cloudant client.
 ~~~ java
 
 HttpHead head = new HttpHead(dbClient.getDBUri() + "doc-id");
 HttpResponse response = dbClient.executeRequest(head);
 String revision = response.getFirstHeader("ETAG").getValue();
-HttpClientUtils.closeQuietly(response); 
+HttpClientUtils.closeQuietly(response);
 
 ~~~
 
@@ -371,9 +372,9 @@ ChangesResult changes = db.changes()
 				.includeDocs(true)
 				.limit(1)
 				.getChanges();
-		
+
 List<ChangesResult.Row> rows = changes.getResults();
-		
+
 for (Row row : rows) {
 	List<ChangesResult.Row.Rev> revs = row.getChanges();
 	String docId = row.getId();
@@ -431,7 +432,7 @@ EnumSet<Permissions> p = EnumSet.<Permissions>of( Permissions._writer, Permissio
 db.setPermissions(key.getKey(), p);
 ~~~
 
-### com.cloudant.client.api.Database.ensureFullCommit() 
+### com.cloudant.client.api.Database.ensureFullCommit()
 Requests the database commits any recent changes to disk
 
 ~~~ java
@@ -450,16 +451,16 @@ Database db = dbClient.database("alice", true);
 JsonObject json = new JsonObject();
 json.addProperty("_id", "test-doc-id-2");
 json.add("json-array", new JsonArray());
-Response response =db.save(json); 
+Response response =db.save(json);
 
-~~~ 
+~~~
 
-Insert `pojo` in the database. The parameter `object` can be a pojo. 
+Insert `pojo` in the database. The parameter `object` can be a pojo.
 
 ~~~ java
 Database db = dbClient.database("alice", true);
-Foo foo = new Foo(); 
-Response response = db.save(foo); 
+Foo foo = new Foo();
+Response response = db.save(foo);
 
 ~~~
 
@@ -472,7 +473,7 @@ map.put("_id", "test-doc-id-1");
 map.put("title", "test-doc");
 Response response =db.save(map);
 
-~~~ 
+~~~
 
 
 ### com.cloudant.client.api.Database.save(object,writeQuorum)
@@ -498,13 +499,13 @@ Saves an object in the database using HTTP POST request with specificied write q
 ~~~ java
 Database db = dbClient.database("alice", true);
 db.post(new Animal("test"), 2);
-Animal h = db.find(Animal.class, "test", 
+Animal h = db.find(Animal.class, "test",
 				new com.cloudant.client.api.model.Params().readQuorum(3));
 ~~~
 
 ### com.cloudant.client.api.Database.saveAttachment(inputStream,name,contentType)
- Saves an attachment to a new document with a generated UUID as the document id. 
- 
+ Saves an attachment to a new document with a generated UUID as the document id.
+
 ~~~ java
 byte[] bytesToDB = "binary data".getBytes();
 ByteArrayInputStream bytesIn = new ByteArrayInputStream(bytesToDB);
@@ -531,23 +532,28 @@ db.batch(new Foo());
 ~~~
 
 ### com.cloudant.client.api.Database.find(doc-id)
-Finds a document based on the provided `doc-id` and return the result as `InputStream`
+Finds a document based on the provided `doc-id` and return the result as `InputStream`. Make sure you close the stream when done, else you could lock up the client easily
 
 ~~~ java
 Database db = dbClient.database("alice", true);
 Response response = db.save(new Foo());
 InputStream inputStream = db.find(response.getId());
 
+// do stuff and finally dont forget to close the stream
+inputStream.close();
+
 ~~~
 
 ### com.cloudant.client.api.Database.find(doc-id,rev)
-Finds a document based on the provided `doc-id` and `rev`,return the result as `InputStream`
+Finds a document based on the provided `doc-id` and `rev`,return the result as `InputStream`. Make sure you close the stream when done, else you could lock up the client easily
 
 ~~~ java
 Database db = dbClient.database("alice", true);
 Response response = db.save(new Foo());
 InputStream inputStream = db.find(response.getId(),response.getRev());
 
+// do stuff and finally dont forget to close the stream
+inputStream.close();
 ~~~
 ### com.cloudant.client.api.Database.find(class,doc-id)
 
@@ -603,7 +609,7 @@ Updates an object in the database, the object must have the correct `_id` and `_
 Database db = dbClient.database("alice", true);
 String idWithSlash = "a/" + generateUUID();
 Response response = db.save(new Bar(idWithSlash));
-		
+
 Bar bar = db.find(Bar.class, response.getId());
 Response responseUpdate = db.update(bar);
 ~~~
@@ -613,7 +619,7 @@ Updates an object in the database, the object must have the correct `_id` and `_
 
 ~~~ java
 db.save(new Animal("human"), 2);
-Animal h = db.find(Animal.class, "human", 
+Animal h = db.find(Animal.class, "human",
 				new com.cloudant.client.api.model.Params().readQuorum(2));
 db.update(h.setClass("inhuman"), 2);
 
@@ -662,9 +668,9 @@ String output = db.invokeUpdateHandler("example/example_update", response.getId(
 
 ## Bulk Documents
 
-Bulk documents API performs two operations: Modify & Fetch for bulk documents. 
+Bulk documents API performs two operations: Modify & Fetch for bulk documents.
 
-### Insert/Update docs 
+### Insert/Update docs
 
 ~~~ java
 
@@ -683,7 +689,7 @@ List all the docs in the database with optional query string additions `params`.
 List<Foo> docs = dbClient.view("_all_docs")
 					  .includeDocs(true)
 					  .query(Foo.class);
-					  
+
 ~~~
 
 List multiple documents specified by docID's in the database .
@@ -694,7 +700,7 @@ List<Foo> docs = dbClient.view("_all_docs")
 					  .includeDocs(true)
 					  .keys(keys)
 					  .query(Foo.class);
-					  
+
 ~~~
 
 
@@ -705,7 +711,7 @@ List<Foo> docs = dbClient.view("_all_docs")
 
 The base64 data of an attachment may be encoded utilizing the included dependency on Apache Codec Base64.encodeBase64String(bytes).
 
-Model classes that extend com.cloudant.client.api.model.Document inherit the support for inline attachments. 
+Model classes that extend com.cloudant.client.api.model.Document inherit the support for inline attachments.
 ~~~ java
 
 Attachment attachment = new Attachment();
@@ -750,7 +756,7 @@ List<Foo> foos = db.view("example/foo")
 				.query(Foo.class);
 ~~~
  If you're looking to filter the view results by key(s), pass multiple keys as the argument of key() function
- 
+
 ~~~ java
 
 List<Foo> foos = db.view("example/foo")
@@ -768,14 +774,14 @@ List<Foo> foos = db.view("example/foo")
 				.endKey("key-2")
 				.includeDocs(true)
 				.query(Foo.class);
-				
+
 ~~~
 
 To get the primitive value  call the scalar methods e.g queryForInt() or queryForLong()
 
 ~~~ java
 
-int count = dbClient.view("example/by_tag").key("cloudantdb").queryForInt(); 
+int count = dbClient.view("example/by_tag").key("cloudantdb").queryForInt();
 ~~~
 ### retrieving the design doc from server
 call getFromDb(design-doc) to retrieve the server copy .
@@ -783,7 +789,7 @@ call getFromDb(design-doc) to retrieve the server copy .
 
 DesignDocument designDoc = db.design().getFromDb("_design/example");
 ~~~
-### synchronizing design doc 
+### synchronizing design doc
 
 call synchronizeWithDb(design-doc) method to synchronize the server copy with local one.
 
@@ -824,7 +830,7 @@ To see all the indexes in a database, call the database `.listIndices()` method 
 List<Index> indices = db.listIndices();
 ~~~
 
-To create an index, use  `.createIndex()` method 
+To create an index, use  `.createIndex()` method
 
 ~~~ java
 
@@ -900,7 +906,7 @@ To reuse a cookie:
 ~~~ java
 
 // Make a new connection with the cookie.
-CloudantClient cookieBasedClient = new 		     
+CloudantClient cookieBasedClient = new
                           CloudantClient("cloudant.account", cookie);
 
 ~~~
@@ -912,14 +918,15 @@ Besides the account and password options, you can add an optional `com.cloudant.
 
 ~~~ java
 ConnectOptions connectOptions = new ConnectOptions()
-										. setSocketTimeout(50)
-                                        . setConnectionTimeout(50)
-                                        . setMaxConnections(100)
-                                        . setProxyHost("http://localhost")
-                                        . setProxyPort(8080);
+                                        .setSocketTimeout(50)
+                                        .setConnectionTimeout(50)
+                                        .setMaxConnections(100)
+                                        .setProxyHost("http://localhost")
+                                        .setProxyPort(8080)
+                                        .disableSSLAuthentication(true);
  CloudantClient client = new CloudantClient("cloudant.com","test","password",  
                                                   connectOptions );
-                                                  
+
 ~~~
 
 java-cloudant internally uses the Gson library to serialize/deserialize JSON to/from Java objects. You can register your custom de-serializers by providing the CloudantClient instance by with your own GsonBuilder instance
@@ -927,15 +934,20 @@ java-cloudant internally uses the Gson library to serialize/deserialize JSON to/
 ~~~java
 GsonBuilder builder = new GsonBuilder();
 builder.setDateFormat("yyyy-MM-dd'T'HH:mm:ss");
- 
+
 CloudantClient account = new CloudantClient(cloudantaccount,userName,password);
-account.setGsonBuilder(builder); 
+account.setGsonBuilder(builder);
 ~~~
 
 
 ## tests
 
-To run the test suite first edit the cloudant properties. Open the file `src/test/resources/cloudant.properties` and `src/test/resources/cloudant-2.properties`, provide values for the following properties  
+The test suite needs access to cloudant account(s) to run.
+To run the test suite first edit the cloudant properties.
+Copy the files `src/test/resources/cloudant-sample.properties` and
+`src/test/resources/cloudant-2-sample.properties` to
+`src/test/resources/cloudant.properties` and
+`src/test/resources/cloudant-2.properties`, and then provide values for the following properties:
 
 ~~~ java
 cloudant.account=myCloudantAccount
@@ -943,11 +955,12 @@ cloudant.username=testuser
 cloudant.password=testpassword
 ~~~
 
-Once all the required properties are provided in the properties file run `com.cloudant.test.main.CloudantTestSuite` test class.
+Once all the required properties are provided in the properties file
+run the `com.cloudant.test.main.CloudantTestSuite` test class.
 
 ## License
 
-Copyright 2014 Cloudant, an IBM company.
+Copyright 2014-2015 Cloudant, an IBM company.
 
 Licensed under the apache license, version 2.0 (the "license"); you may not use this file except in compliance with the license.  you may obtain a copy of the license at
 

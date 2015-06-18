@@ -4,3 +4,10 @@
 target
 *.log
 *.log.*
+src/test/resources/cloudant.properties
+src/test/resources/cloudant-2.properties
+.idea/*
+!.idea/codeStyleSettings.xml
+*.iml
+build/
+.gradle/

@@ -10,6 +10,7 @@ import static org.lightcouch.internal.CouchDbUtil.getStream;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
+import java.io.UnsupportedEncodingException;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -75,7 +76,6 @@ public class Search {
 	
 	// search fields
 	private Integer limit;
-	private Integer skip;
 	private boolean includeDocs = false;
 	private String bookmark;
 	private Database db;
@@ -122,7 +122,7 @@ public class Search {
 		InputStream instream = null;
 		List<T> result = new ArrayList<T>();
 		try {  
-			Reader reader = new InputStreamReader(instream = queryForStream(query));
+			Reader reader = new InputStreamReader(instream = queryForStream(query), "UTF-8");
 			JsonObject json = new JsonParser().parse(reader).getAsJsonObject(); 
 			if ( json.has("rows") ) {
 				if (!includeDocs) {
@@ -137,6 +137,9 @@ public class Search {
 				log.warn("No ungrouped result available. Use queryGroups() if grouping set");
 			}
 			return result;
+		} catch (UnsupportedEncodingException e1) {
+			// This should never happen as every implementation of the java platform is required to support UTF-8.
+			throw new RuntimeException(e1);
 		}
 		finally {
 			close(instream);
@@ -155,7 +158,7 @@ public class Search {
 	public <T> Map<String,List<T>> queryGroups(String query, Class<T> classOfT) {
 		InputStream instream = null;
 		try {  
-			Reader reader = new InputStreamReader(instream = queryForStream(query));
+			Reader reader = new InputStreamReader(instream = queryForStream(query), "UTF-8");
 			JsonObject json = new JsonParser().parse(reader).getAsJsonObject(); 
 			Map<String,List<T>> result = new LinkedHashMap<String, List<T>>();
 			if ( json.has("groups") ) 	{
@@ -176,6 +179,9 @@ public class Search {
 				log.warn("No grouped results available. Use query() if non grouped query");
 			}
 			return result;
+		} catch (UnsupportedEncodingException e1) {
+			// This should never happen as every implementation of the java platform is required to support UTF-8.
+			throw new RuntimeException(e1);
 		}
 		finally {
 			close(instream);
@@ -195,7 +201,7 @@ public class Search {
 	public <T> SearchResult<T> querySearchResult(String query, Class<T> classOfT) {
 		InputStream instream = null;
 		try {  
-			Reader reader = new InputStreamReader(instream = queryForStream(query));
+			Reader reader = new InputStreamReader(instream = queryForStream(query), "UTF-8");
 			JsonObject json = new JsonParser().parse(reader).getAsJsonObject(); 
 			SearchResult<T> sr = new SearchResult<T>();
 			sr.setTotalRows(getAsLong(json, "total_rows")); 
@@ -216,6 +222,9 @@ public class Search {
 				sr.setRanges(getFieldsCounts(json.getAsJsonObject("ranges").entrySet()));
 			}
 			return sr;
+		} catch (UnsupportedEncodingException e) {
+			// This should never happen as every implementation of the java platform is required to support UTF-8.
+			throw new RuntimeException(e);
 		}
 		finally {
 			close(instream);
@@ -346,15 +355,6 @@ public class Search {
 		if ( stale ) {
 			uriBuilder.query("stale", "ok");
 		}
-		return this;
-	}
-	
-	/**
-	 * @param skip Skips <i>n</i> number of documents.
-	 */
-	public Search skip(Integer skip) {
-		this.skip = skip;
-		uriBuilder.query("skip", this.skip);
 		return this;
 	}
 	
