@@ -15,7 +15,7 @@ public class ConnectOptions {
 	private String proxyHost ;
 	private int proxyPort ;
 	private boolean isSSLAuthenticationDisabled;
-	private SSLSocketFactory secureSSLSocketFactory;
+	private SSLSocketFactory authenticatedModeSSLSocketFactory;
 	
 	public ConnectOptions(){
 		// default constructor
@@ -46,8 +46,10 @@ public class ConnectOptions {
 		return this ;
 	}
 
-	/** Sets whether hostname verification and certificate chain validation
-	 * should be disabled.
+	/**
+	 * Sets whether hostname verification, certificate chain validation,
+	 * and the use of the optional
+	 * {@link #getAuthenticatedModeSSLSocketFactory()} should be disabled.
 	 * @param disabled set to true to disable or false to enable.
 	 * @return the updated {@link ConnectOptions} object.
 	 * @see #isSSLAuthenticationDisabled */
@@ -58,13 +60,13 @@ public class ConnectOptions {
 
 	/**
 	 * Specifies the SSLSocketFactory to use when connecting to CloudantDB
-	 * over a <code>https</code> URL.
+	 * over a <code>https</code> URL, when SSL authentication is enabled.
 	 * @param factory An SSLSocketFactory, or <code>null</code> for the
 	 *                default SSLSocketFactory of the JRE.
-	 * @see #getSecureSSLSocketFactory()
+	 * @see #getAuthenticatedModeSSLSocketFactory()
 	 */
-	public ConnectOptions setSecureSSLSocketFactory(SSLSocketFactory factory) {
-		this.secureSSLSocketFactory = factory;
+	public ConnectOptions setAuthenticatedModeSSLSocketFactory(SSLSocketFactory factory) {
+		this.authenticatedModeSSLSocketFactory = factory;
 		return this;
 	}
 
@@ -88,21 +90,26 @@ public class ConnectOptions {
 		return proxyPort;
 	}
 
-	/** @return true if hostname verification and certificate chain validation are
-	 *  set to disabled or false otherwise.
-	 *  @see #setSSLAuthenticationDisabled(boolean) */
+	/**
+	 * @return true if hostname verification, certificate chain validation,
+	 * and the use of the optional
+	 * {@link #getAuthenticatedModeSSLSocketFactory()} are disabled, or
+	 * false otherwise.
+	 * @see #setSSLAuthenticationDisabled(boolean)
+	 */
 	public boolean isSSLAuthenticationDisabled() {
 		return isSSLAuthenticationDisabled;
 	}
 
 	/**
 	 * Returns the SSLSocketFactory that gets used when connecting to
-	 * CloudantDB over a <code>https</code> URL.
+	 * CloudantDB over a <code>https</code> URL, when SSL authentication is
+	 * enabled.
 	 * @return An SSLSocketFactory, or <code>null</code>, which stands for
 	 *         the default SSLSocketFactory of the JRE.
-	 * @see #setSecureSSLSocketFactory(javax.net.ssl.SSLSocketFactory)
+	 * @see #setAuthenticatedModeSSLSocketFactory(javax.net.ssl.SSLSocketFactory)
 	 */
-	public SSLSocketFactory getSecureSSLSocketFactory() {
-		return secureSSLSocketFactory;
+	public SSLSocketFactory getAuthenticatedModeSSLSocketFactory() {
+		return authenticatedModeSSLSocketFactory;
 	}
 }
