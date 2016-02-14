@@ -44,6 +44,7 @@ import org.apache.http.client.utils.HttpClientUtils;
 import org.apache.http.config.ConnectionConfig;
 import org.apache.http.config.Registry;
 import org.apache.http.config.RegistryBuilder;
+import org.apache.http.config.SocketConfig;
 import org.apache.http.conn.socket.ConnectionSocketFactory;
 import org.apache.http.conn.socket.PlainConnectionSocketFactory;
 import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
@@ -157,7 +158,9 @@ public class CouchDbClient extends  CouchDbClientBase {
 							.setCharset(Consts.UTF_8).build())
 					.setDefaultRequestConfig(RequestConfig.custom()
 							.setSocketTimeout(props.getSocketTimeout())
-							.setConnectTimeout(props.getConnectionTimeout()).build());
+							.setConnectTimeout(props.getConnectionTimeout()).build())
+					.setDefaultSocketConfig(SocketConfig.custom()
+							.setSoTimeout(props.getSocketTimeout()).build());
 			if (props.getProxyHost() != null) 
 				clientBuilder.setProxy(new HttpHost(props.getProxyHost(), props.getProxyPort()));
 			clientBuilder.setDefaultCookieStore(cookies); // use AUTH cookies
