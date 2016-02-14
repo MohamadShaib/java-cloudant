@@ -37,6 +37,7 @@ public class CouchDbProperties {
 	// optional
 	private int socketTimeout;
 	private int connectionTimeout;
+	private int connectionRequestTimeout;
 	private int maxConnections;
 	private String proxyHost;
 	private int proxyPort;
@@ -192,4 +193,18 @@ public class CouchDbProperties {
 		return disableSSLAuthentication;
 	}
 
+	/** return connection request time out , how long request will wait to get connection from connection pool
+	 * @see #setConnectionRequestTimeout */
+	public int getConnectionRequestTimeout() {
+		return connectionRequestTimeout;
+	}
+
+	/** Sets connection request time out , how long request will wait to get connection from connection pool
+	 * @param connectionRequestTimeout set the time to wait for connection.
+	 * @return the updated {@link CouchDbProperties} object.
+	 * @see #getConnectionRequestTimeout */
+	public CouchDbProperties setConnectionRequestTimeout(int connectionRequestTimeout) {
+		this.connectionRequestTimeout = connectionRequestTimeout;
+		return this;
+	}
 }

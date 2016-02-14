@@ -456,7 +456,8 @@ public class CloudantClient {
 			props.setConnectionTimeout(connectOptions.getConnectionTimeout());
 			props.setSocketTimeout(connectOptions.getSocketTimeout());
 			props.setMaxConnections(connectOptions.getMaxConnections());
-			
+			props.setConnectionRequestTimeout(connectOptions.getConnectionRequestTimeout());
+
 			props.setProxyHost(connectOptions.getProxyHost());
 			props.setProxyPort(connectOptions.getProxyPort());
 			props.disableSSLAuthentication(connectOptions.isSSLAuthenticationDisabled());

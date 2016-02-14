@@ -158,10 +158,11 @@ public class CouchDbClient extends  CouchDbClientBase {
 							.setCharset(Consts.UTF_8).build())
 					.setDefaultRequestConfig(RequestConfig.custom()
 							.setSocketTimeout(props.getSocketTimeout())
-							.setConnectTimeout(props.getConnectionTimeout()).build())
-					.setDefaultSocketConfig(SocketConfig.custom()
+							.setConnectTimeout(props.getConnectionTimeout())
+							.setConnectionRequestTimeout(props.getConnectionRequestTimeout()).build()
+					).setDefaultSocketConfig(SocketConfig.custom()
 							.setSoTimeout(props.getSocketTimeout()).build());
-			if (props.getProxyHost() != null) 
+			if (props.getProxyHost() != null)
 				clientBuilder.setProxy(new HttpHost(props.getProxyHost(), props.getProxyPort()));
 			clientBuilder.setDefaultCookieStore(cookies); // use AUTH cookies
 			if (props.getUsername() != null) {
